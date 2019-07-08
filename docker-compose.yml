@@ -33,11 +33,13 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
       KAFKA_ZOOKEEPER_CONNECT: "zoo1:2181"
-      KAFKA_CREATE_TOPICS: "click-stream:1:1"
+      #KAFKA_CREATE_TOPICS: "click-stream:1:1"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_BROKER_ID: 1
       KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
     volumes:
       - ./container-data/kafka1/data:/var/lib/kafka/data
+      - ./container-data/kafka1/logs:/logs
     depends_on:
       - zoo1
 
@@ -53,10 +55,12 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
       KAFKA_ZOOKEEPER_CONNECT: "zoo1:2181"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_BROKER_ID: 2
       KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
     volumes:
       - ./container-data/kafka2/data:/var/lib/kafka/data
+      - ./container-data/kafka2/logs:/logs
     depends_on:
       - zoo1
 
@@ -72,10 +76,12 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
       KAFKA_ZOOKEEPER_CONNECT: "zoo1:2181"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_BROKER_ID: 3
       KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
     volumes:
       - ./container-data/kafka3/data:/var/lib/kafka/data
+      - ./container-data/kafka3/logs:/logs
     depends_on:
       - zoo1
 
@@ -147,7 +153,7 @@ services:
     environment:
       SPARK_MASTER: spark://spark-master:7077
       SPARK_PUBLIC_DNS: 0.0.0.0
-      SPARK_WORKER_CORES: 2
+      SPARK_WORKER_CORES: 1
       SPARK_WORKER_MEMORY: 1g
       SPARK_WORKER_PORT: 8881
       SPARK_WORKER_WEBUI_PORT: 8081
@@ -169,7 +175,7 @@ services:
     environment:
       SPARK_MASTER: spark://spark-master:7077
       SPARK_PUBLIC_DNS: 0.0.0.0
-      SPARK_WORKER_CORES: 2
+      SPARK_WORKER_CORES: 1
       SPARK_WORKER_MEMORY: 1g
       SPARK_WORKER_PORT: 8881
       SPARK_WORKER_WEBUI_PORT: 8081
