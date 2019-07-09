@@ -33,7 +33,6 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
       KAFKA_ZOOKEEPER_CONNECT: "zoo1:2181"
-      #KAFKA_CREATE_TOPICS: "click-stream:1:1"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_BROKER_ID: 1
       KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
@@ -86,42 +85,42 @@ services:
       - zoo1
 
 # =============== Cassandra services ===============
-#  cassandra-seed:
-#    image: cassandra:latest
-#    ports:
-#      - "9042:9042"
-#    volumes:
-#      - "./container-data/cassandra_data_seed:/var/lib/cassandra"
-#    environment:
-#      - "CASSANDRA_SEEDS=cassandra-seed"
-#      - "CASSANDRA_CLUSTER_NAME=Test Cluster"
-#      - "CASSANDRA_DC=se1"
-#      - "CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch"
-#
-#
-#  cassandra1:
-#    image: cassandra:latest
-#    volumes:
-#      - "./container-data/cassandra_data_1:/var/lib/cassandra"
-#    environment:
-#      - "CASSANDRA_SEEDS=cassandra-seed"
-#      - "CASSANDRA_CLUSTER_NAME=Test Cluster"
-#      - "CASSANDRA_DC=se1"
-#      - "CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch"
-#    depends_on:
-#      - cassandra-seed
-#
-#  cassandra2:
-#    image: cassandra:latest
-#    volumes:
-#      - "./container-data/cassandra_data_2:/var/lib/cassandra"
-#    environment:
-#      - "CASSANDRA_SEEDS=cassandra-seed"
-#      - "CASSANDRA_CLUSTER_NAME=Test Cluster"
-#      - "CASSANDRA_DC=se1"
-#      - "CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch"
-#    depends_on:
-#      - cassandra-seed
+  cassandra-seed:
+    image: cassandra:3.0
+    ports:
+      - "9042:9042"
+    volumes:
+      - "./container-data/cassandra_data_seed:/var/lib/cassandra"
+    environment:
+      - "CASSANDRA_SEEDS=cassandra-seed"
+      - "CASSANDRA_CLUSTER_NAME=Test Cluster"
+      - "CASSANDRA_DC=se1"
+      - "CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch"
+
+  cassandra1:
+    image: cassandra:3.0
+    volumes:
+      - "./container-data/cassandra_data_1:/var/lib/cassandra"
+    environment:
+      - "CASSANDRA_SEEDS=cassandra-seed"
+      - "CASSANDRA_CLUSTER_NAME=Test Cluster"
+      - "CASSANDRA_DC=se1"
+      - "CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch"
+    depends_on:
+      - cassandra-seed
+
+  cassandra2:
+    image: cassandra:3.0
+    volumes:
+      - "./container-data/cassandra_data_2:/var/lib/cassandra"
+    environment:
+      - "CASSANDRA_SEEDS=cassandra-seed"
+      - "CASSANDRA_CLUSTER_NAME=Test Cluster"
+      - "CASSANDRA_DC=se1"
+      - "CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch"
+    depends_on:
+      - cassandra-seed
+
 # =============== Spark services ===============
   spark-master:
     image: bde2020/spark-master:2.4.1-hadoop2.7
@@ -131,17 +130,29 @@ services:
     environment:
       SPARK_PUBLIC_DNS: 0.0.0.0
       INIT_DAEMON_STEP: setup_spark
-      SPARK_DEPLOY_DEFAULTCORES: 2
+      #SPARK_DEPLOY_DEFAULTCORES: 2
+    expose:
+      - 4040
+      - 7001
+      - 7002
+      - 7003
+      - 7004
+      - 7005
+      - 7006
+      - 7077
+      - 6066
     ports:
      - 4040:4040
      - 6066:6066
      - 7077:7077
      - 8080:8080
+     - 20021:20021
     volumes:
      - ./container-data/spark-master/conf:/conf
      - ./container-data/spark-master/data:/tmp/data
      - ./container-data/spark-master/work:/spark/work
      - ./container-data/spark-allnodes:/jar
+     - ./container-data/spark-allnodes:/etc/spark/apps
 
   spark-worker-1:
     image: bde2020/spark-worker:2.4.1-hadoop2.7
@@ -153,10 +164,17 @@ services:
     environment:
       SPARK_MASTER: spark://spark-master:7077
       SPARK_PUBLIC_DNS: 0.0.0.0
-      SPARK_WORKER_CORES: 1
-      SPARK_WORKER_MEMORY: 1g
+      SPARK_WORKER_CORES: 2
+      SPARK_WORKER_MEMORY: 3g
       SPARK_WORKER_PORT: 8881
       SPARK_WORKER_WEBUI_PORT: 8081
+    expose:
+      - 7012
+      - 7013
+      - 7014
+      - 7015
+      - 7016
+      - 8881
     ports:
      - 8081:8081
     volumes:
@@ -164,6 +182,7 @@ services:
      - ./container-data/spark-worker-1/data:/tmp/data
      - ./container-data/spark-worker-1/work:/spark/work
      - ./container-data/spark-allnodes:/jar
+     - ./container-data/spark-allnodes:/etc/spark/apps
 
   spark-worker-2:
     image: bde2020/spark-worker:2.4.1-hadoop2.7
@@ -175,10 +194,17 @@ services:
     environment:
       SPARK_MASTER: spark://spark-master:7077
       SPARK_PUBLIC_DNS: 0.0.0.0
-      SPARK_WORKER_CORES: 1
-      SPARK_WORKER_MEMORY: 1g
+      SPARK_WORKER_CORES: 2
+      SPARK_WORKER_MEMORY: 3g
       SPARK_WORKER_PORT: 8881
       SPARK_WORKER_WEBUI_PORT: 8081
+    expose:
+      - 7012
+      - 7013
+      - 7014
+      - 7015
+      - 7016
+      - 8882
     ports:
      - 8082:8082
     volumes:
@@ -186,3 +212,4 @@ services:
      - ./container-data/spark-worker-2/data:/tmp/data
      - ./container-data/spark-worker-2/work:/spark/work
      - ./container-data/spark-allnodes:/jar
+     - ./container-data/spark-allnodes:/etc/spark/apps
