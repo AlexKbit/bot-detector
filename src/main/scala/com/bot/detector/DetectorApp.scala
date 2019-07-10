@@ -1,15 +1,9 @@
 package com.bot.detector
 
-import org.apache.spark.sql.{Dataset, Encoders, SaveMode, SparkSession}
+import org.apache.spark.sql.{Dataset, SaveMode, SparkSession}
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.expressions.scalalang.typed
 import org.apache.spark.sql.cassandra._
 import org.apache.spark.streaming._
-import org.apache.spark.streaming.kafka010._
-import com.datastax.spark.connector._
-import com.datastax.spark.connector.streaming._
-import org.apache.spark.sql.streaming.OutputMode
 
 object DetectorApp {
 
@@ -66,7 +60,6 @@ object DetectorApp {
           .save
        }.start
 
-    //streamContext.start()
     streamContext.awaitTermination()
   }
 
@@ -75,7 +68,6 @@ object DetectorApp {
       .master(master)
       .appName("Bot Detector")
       .config("spark.cassandra.connection.host", "localhost")
-      //.enableHiveSupport
       .getOrCreate()
   }
 }
