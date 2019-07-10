@@ -6,15 +6,16 @@ import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.expressions.scalalang.typed
 import org.apache.spark.sql.cassandra._
 import org.apache.spark.streaming._
-import org.apache.spark.streaming.kafka._
+import org.apache.spark.streaming.kafka010._
 import com.datastax.spark.connector._
 import com.datastax.spark.connector.streaming._
+import org.apache.spark.sql.streaming.OutputMode
 
 object DetectorApp {
 
   val DEFAULT_MASTER = "local[*]"
   val KAFKA_TOPIC = "click-stream"
-  val WHILE_BAN_TIME = 10 * 60 * 1000 // 10 min
+  val BOT_BAN_TIME = 10 * 60 // 10 min
 
   val LIMIT_OF_EVENTS = 1000
   val LIMIT_OF_CATEGORIES = 5
@@ -23,6 +24,7 @@ object DetectorApp {
   def main(args: Array[String]): Unit = {
     val master = if (args.length == 0) DEFAULT_MASTER else args(0)
     val spark = createSparkSession(master)
+    val streamContext = new StreamingContext(spark.sparkContext, Seconds(1))
     import spark.implicits._
     val clickStream = spark
       .readStream
@@ -48,12 +50,24 @@ object DetectorApp {
       .where(s"categoryCount > $LIMIT_OF_CATEGORIES")
 
     aggregates
-      .write
-      .mode(SaveMode.Overwrite)
-      .cassandraFormat("detected_bots", "botdetect")
-      .option("confirm.truncate", true)
-      .save
+      .withColumn("ban_start", lit(current_timestamp()))
+      .withColumnRenamed("eventsCount","events_count")
+      .withColumnRenamed("clickCount","click_count")
+      .withColumnRenamed("viewCount","view_count")
+      .withColumnRenamed("categoryCount","category_count")
+      .writeStream
+      .option("checkpointLocation", "/tmp/check_point/")
+      .foreachBatch { (batchDF, _) =>
+        batchDF
+          .write
+          .cassandraFormat("detected_bots", "botdetect")
+          .option("spark.cassandra.output.ttl", BOT_BAN_TIME)
+          .mode(SaveMode.Append)
+          .save
+       }.start
 
+    //streamContext.start()
+    streamContext.awaitTermination()
   }
 
   def createSparkSession(master: String): SparkSession = {

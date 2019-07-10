@@ -1,12 +1,12 @@
 package com.bot.detector
 
-import java.util.Date
+import java.sql.Timestamp
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 
-case class ClickEvent(@JsonProperty("unix_time") time: Date,
+case class ClickEvent(@JsonProperty("unix_time") time: Timestamp,
                       @JsonProperty("category_id") categoryId: Int,
                       @JsonProperty("ip") ip: String,
                       @JsonProperty("type") eventType:String)
