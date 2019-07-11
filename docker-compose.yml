@@ -120,7 +120,6 @@ services:
       - "CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch"
     depends_on:
       - cassandra-seed
-      - cassandra1
 
 # =============== Spark services ===============
   spark-master:

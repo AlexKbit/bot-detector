@@ -10,7 +10,10 @@ libraryDependencies ++= Seq(
   "org.apache.spark" %% "spark-sql" % "2.4.3",
   "org.apache.spark" %% "spark-streaming-kafka-0-10" % "2.4.3",
   "org.apache.spark" %% "spark-sql-kafka-0-10" % "2.4.3",
-  "com.datastax.spark" % "spark-cassandra-connector_2.11" % "2.4.1"
+  "com.datastax.spark" % "spark-cassandra-connector_2.11" % "2.4.1",
+
+  "org.scalatest" %% "scalatest" % "3.0.5" % "test",
+  "net.manub" %% "scalatest-embedded-kafka" % "0.16.0" % "test"
 )
 
 assemblyJarName in assembly := s"${name.value.replace(' ','-')}-${version.value}.jar"

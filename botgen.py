@@ -71,7 +71,8 @@ def do_generate(fd = None):
     first = True
     for entry in generate_log(args, datetime.now()):
         if not first and fd:
-            fd.write(",\n")
+            #fd.write(",\n")
+            fd.write("\n")
         else:
             first = False
         writeAsJson(entry, fd)
@@ -80,9 +81,9 @@ def main(args):
     print("started with parameters :", args)
     if args.file:
         with open(args.file, 'w') as fd:
-            fd.write("[")
+            #fd.write("[")
             do_generate(fd)
-            fd.write("]")
+            #fd.write("]")
     else:
         do_generate()
 

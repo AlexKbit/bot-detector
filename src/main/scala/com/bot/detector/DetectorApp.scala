@@ -32,16 +32,16 @@ object DetectorApp {
       .map(r => ClickEvent(r.getString(0)))
 
     val aggregates = clickEvents
-      .withWatermark("time", "60 seconds")
-      .groupBy(window($"time","10 minutes"), $"ip")
+      .withWatermark("time", "1 minute")
+      .groupBy(window($"time","10 seconds"), $"ip")
       .agg(
         count(col("eventType")).alias("eventsCount"),
         count(col("eventType") === "click").alias("clickCount"),
         count(col("eventType") === "view").alias("viewCount"),
         count(col("categoryId")).alias("categoryCount"))
-      .where(s"eventsCount > $LIMIT_OF_EVENTS")
-      .where(s"clickCount / viewCount > $LIMIT_OF_CLICK_VIEW")
-      .where(s"categoryCount > $LIMIT_OF_CATEGORIES")
+      .filter(s"eventsCount > $LIMIT_OF_EVENTS")
+      .filter(s"clickCount / viewCount > $LIMIT_OF_CLICK_VIEW")
+      .filter(s"categoryCount > $LIMIT_OF_CATEGORIES")
 
     aggregates
       .withColumn("ban_start", lit(current_timestamp()))
@@ -50,11 +50,11 @@ object DetectorApp {
       .withColumnRenamed("viewCount","view_count")
       .withColumnRenamed("categoryCount","category_count")
       .writeStream
-      .option("checkpointLocation", "/tmp/check_point/")
-      .foreachBatch { (batchDF, _) =>
+      //.option("checkpointLocation", "/tmp/check_point/")
+      .foreachBatch { (batchDF, id) =>
         batchDF
           .write
-          .cassandraFormat("detected_bots", "botdetect")
+          .cassandraFormat("detected_bots", "botdetect", "Test Cluster")
           .option("spark.cassandra.output.ttl", BOT_BAN_TIME)
           .mode(SaveMode.Append)
           .save
