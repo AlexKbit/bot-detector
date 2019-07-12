@@ -32,16 +32,17 @@ object DetectorApp {
       .map(r => ClickEvent(r.getString(0)))
 
     val aggregates = clickEvents
-      .withWatermark("time", "1 minute")
-      .groupBy(window($"time","10 seconds"), $"ip")
+      .withWatermark("time", "11 minutes")
+      .groupBy(window($"time", "10 minutes", "30 seconds"), $"ip")
       .agg(
         count(col("eventType")).alias("eventsCount"),
         count(col("eventType") === "click").alias("clickCount"),
         count(col("eventType") === "view").alias("viewCount"),
         count(col("categoryId")).alias("categoryCount"))
-      .filter(s"eventsCount > $LIMIT_OF_EVENTS")
-      .filter(s"clickCount / viewCount > $LIMIT_OF_CLICK_VIEW")
-      .filter(s"categoryCount > $LIMIT_OF_CATEGORIES")
+      .where(
+        col("eventsCount") > LIMIT_OF_EVENTS
+          || col("clickCount") / col("viewCount") > LIMIT_OF_CLICK_VIEW
+          || col("categoryCount") > LIMIT_OF_CATEGORIES)
 
     aggregates
       .withColumn("ban_start", lit(current_timestamp()))
@@ -50,7 +51,7 @@ object DetectorApp {
       .withColumnRenamed("viewCount","view_count")
       .withColumnRenamed("categoryCount","category_count")
       .writeStream
-      //.option("checkpointLocation", "/tmp/check_point/")
+      .option("checkpointLocation", "/tmp/check_point/")
       .foreachBatch { (batchDF, id) =>
         batchDF
           .write
