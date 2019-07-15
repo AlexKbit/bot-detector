@@ -3,6 +3,7 @@ package com.bot.detector
 import org.apache.spark.sql.{Dataset, SaveMode, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.cassandra._
+import org.apache.spark.sql.streaming.OutputMode
 import org.apache.spark.streaming._
 
 object DetectorApp {
@@ -51,6 +52,7 @@ object DetectorApp {
       .withColumnRenamed("viewCount","view_count")
       .withColumnRenamed("categoryCount","category_count")
       .writeStream
+      .outputMode(OutputMode.Append)
       .option("checkpointLocation", "/tmp/check_point/")
       .foreachBatch { (batchDF, id) =>
         batchDF
