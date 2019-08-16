@@ -109,17 +109,13 @@ services:
     depends_on:
       - cassandra-seed
 
-  cassandra2:
-    image: cassandra:3.0
+# =============== Redis services ===============
+  redis1:
+    image: bitnami/redis:5.0
+    ports:
+      - "6379:6379"
     volumes:
-      - "./container-data/cassandra_data_2:/var/lib/cassandra"
-    environment:
-      - "CASSANDRA_SEEDS=cassandra-seed"
-      - "CASSANDRA_CLUSTER_NAME=Test Cluster"
-      - "CASSANDRA_DC=se1"
-      - "CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch"
-    depends_on:
-      - cassandra-seed
+      - "./container-data/redis1:/bitnami/redis/data"
 
 # =============== Spark services ===============
   spark-master:

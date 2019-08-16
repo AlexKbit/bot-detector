@@ -6,7 +6,7 @@ import org.apache.spark.sql.cassandra._
 import org.apache.spark.sql.streaming.OutputMode
 import org.apache.spark.streaming._
 
-object DetectorApp {
+object DetectorSStreamApp {
 
   val DEFAULT_MASTER = "local[*]"
   val KAFKA_TOPIC = "click-stream"
@@ -14,7 +14,7 @@ object DetectorApp {
 
   val LIMIT_OF_EVENTS = 1000
   val LIMIT_OF_CATEGORIES = 5
-  val LIMIT_OF_CLICK_VIEW = 3
+  val LIMIT_OF_CLICK_VIEW = 0.6
 
   def main(args: Array[String]): Unit = {
     val master = if (args.length == 0) DEFAULT_MASTER else args(0)
