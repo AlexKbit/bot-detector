@@ -4,6 +4,7 @@ import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.sql.cassandra._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming.OutputMode
+import com.datastax.spark.connector._
 import org.apache.spark.sql.{Dataset, SaveMode, SparkSession}
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.kafka010.KafkaUtils
@@ -12,13 +13,10 @@ import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
 
 object DetectorDStreamApp {
 
-  val DEFAULT_MASTER = "local[*]"
-  val KAFKA_TOPIC = "click-stream"
-  val BOT_BAN_TIME = 10 * 60 // 10 min
+  val defaultMaster = "local[*]"
+  val kafkaTopic = "click-stream"
 
-  val LIMIT_OF_EVENTS = 1000
-  val LIMIT_OF_CATEGORIES = 5
-  val LIMIT_OF_CLICK_VIEW = 0.6
+  val limitOfEvents = 20
 
   val kafkaParams = Map[String, Object](
     "bootstrap.servers" -> "localhost:9092,localhost:9093,localhost:9094",
@@ -30,50 +28,38 @@ object DetectorDStreamApp {
   )
 
   def main(args: Array[String]): Unit = {
-    val master = if (args.length == 0) DEFAULT_MASTER else args(0)
-    val spark = createSparkSession(master)
+    val master = if (args.length == 0) defaultMaster else args(0)
+    val spark = CommonUtil.createSparkSession(master)
     val streamContext = new StreamingContext(spark.sparkContext, Seconds(1))
     import spark.implicits._
     val stream = KafkaUtils.createDirectStream[String, String](
       streamContext,
       PreferConsistent,
-      Subscribe[String, String](Array(KAFKA_TOPIC), kafkaParams)
+      Subscribe[String, String](Array(kafkaTopic), kafkaParams)
     )
     val clickEvents = stream.map(rec => ClickEvent(rec.value()))
+
+    clickEvents.foreachRDD { rdd =>
+      rdd.map(event => (event.eventType, event.ip, RedisUtil.isBot(event.ip)(spark), event.time, event.categoryId))
+        .saveToCassandra("botdetect", "click_stream", SomeColumns("type", "ip", "is_bot", "time", "category_id"))
+    }
 
     clickEvents.window(Seconds(10), Seconds(10))
       .map(convert)
       .reduce(reduceAgg)
       .flatMap(m => m.values)
-      .filter(a => a.eventsCount > LIMIT_OF_EVENTS
-        || a.categories.size > LIMIT_OF_CATEGORIES
-        || a.clickCount / a.viewCount > LIMIT_OF_CLICK_VIEW)
+      .filter(a => a.eventsCount > limitOfEvents)
       .foreachRDD{ rdd =>
-        //TODO
+        RedisUtil.writeBotsRdd(rdd.map(agg => BotData(agg.ip)))(spark)
       }
-
 
     streamContext.awaitTermination()
   }
 
-  def createSparkSession(master: String): SparkSession = {
-    SparkSession.builder
-      .master(master)
-      .appName("Bot Detector")
-      .config("spark.cassandra.connection.host", "localhost")
-      .getOrCreate()
-  }
-
-  case class Aggregate(ip: String, eventsCount: Long, clickCount: Long, viewCount: Long, categories: Set[Int])
-
-  case class MapAgg()
-  case class MapAgg()
+  case class Aggregate(ip: String, eventsCount: Long)
 
   def convert(clickEvent: ClickEvent): Map[String, Aggregate] = {
-    val agg = Aggregate(clickEvent.ip, 1L,
-      if (clickEvent.eventType == "click") 1 else 0,
-      if (clickEvent.eventType == "view") 1 else 0,
-      Set(clickEvent.categoryId))
+    val agg = Aggregate(clickEvent.ip, 1L)
     Map[String, Aggregate](clickEvent.ip -> agg)
   }
 
@@ -94,12 +80,7 @@ object DetectorDStreamApp {
       } else {
         val a1 = agg1.get
         val a2 = agg2.get
-        Aggregate(a1.ip,
-          a1.eventsCount + a2.eventsCount,
-          a1.clickCount + a2.clickCount,
-          a1.viewCount + a2.viewCount,
-          a1.categories ++ a2.categories
-        )
+        Aggregate(a1.ip, a1.eventsCount + a2.eventsCount)
       }
     }
   }
