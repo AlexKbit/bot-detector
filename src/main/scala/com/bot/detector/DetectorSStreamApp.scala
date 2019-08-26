@@ -1,5 +1,7 @@
 package com.bot.detector
 
+import java.util.UUID
+
 import org.apache.spark.sql.{Dataset, SaveMode, SparkSession}
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.cassandra._
@@ -33,7 +35,7 @@ object DetectorSStreamApp {
       .writeStream
       .foreachBatch { (batch, _) =>
         val bots = RedisUtil.readBots(spark).cache()
-        batch.map(event => (event.eventType, event.ip, RedisUtil.isBot(bots, event.ip)(spark), event.time, event.categoryId))
+        batch.map(event => (UUID.randomUUID().toString, event.eventType, event.ip, RedisUtil.isBot(bots, event.ip)(spark), event.time, event.categoryId))
           .write
           .cassandraFormat("click_stream", "botdetect")
           .mode(SaveMode.Append)

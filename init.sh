@@ -7,7 +7,7 @@ docker exec -it bot-detector_kafka1_1 /usr/bin/kafka-topics --create --topic cli
 echo '[Cassandra prepare]'
 echo 'Copy create.sql to Cassandra'
 docker cp cassandra/create.sql bot-detector_cassandra1_1:/create.sql
-echo 'Create Cassandra namespace[botdetect] and table[detected_bots]'
+echo 'Create Cassandra namespace[botdetect] and table[click_stream]'
 docker exec -it bot-detector_cassandra1_1 /usr/bin/cqlsh -f /create.sql
 
 echo '[Spark streams prepare]'

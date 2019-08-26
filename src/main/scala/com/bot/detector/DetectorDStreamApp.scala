@@ -1,6 +1,7 @@
 package com.bot.detector
 
 import java.sql.Timestamp
+import java.util.UUID
 
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.sql.cassandra._
@@ -42,7 +43,7 @@ object DetectorDStreamApp {
     val clickEvents = stream.map(rec => ClickEvent(rec.value()))
 
     clickEvents.foreachRDD { rdd =>
-      rdd.map(event => (event.eventType, event.ip, RedisUtil.isBot(event.ip)(spark), event.time, event.categoryId))
+      rdd.map(event => (UUID.randomUUID().toString, event.eventType, event.ip, RedisUtil.isBot(event.ip)(spark), event.time, event.categoryId))
         .saveToCassandra("botdetect", "click_stream", SomeColumns("type", "ip", "is_bot", "time", "category_id"))
     }
 

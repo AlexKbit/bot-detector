@@ -84,6 +84,20 @@ services:
     depends_on:
       - zoo1
 
+# =============== Flume services ===============
+  flume:
+    image: probablyfine/flume:latest
+    environment:
+      FLUME_AGENT_NAME: docker
+    volumes:
+      - type: bind
+        source: ./flume/data
+        target: /tmp/data
+      - ./container-data/flume/conf:/opt/flume-config/flume.conf
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
 # =============== Cassandra services ===============
   cassandra-seed:
     image: cassandra:3.0
@@ -114,6 +128,8 @@ services:
     image: bitnami/redis:5.0
     ports:
       - "6379:6379"
+    environment:
+      - "ALLOW_EMPTY_PASSWORD=yes"
     volumes:
       - "./container-data/redis1:/bitnami/redis/data"
 
