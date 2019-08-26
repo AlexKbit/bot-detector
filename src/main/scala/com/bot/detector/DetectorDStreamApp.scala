@@ -1,5 +1,7 @@
 package com.bot.detector
 
+import java.sql.Timestamp
+
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.sql.cassandra._
 import org.apache.spark.sql.functions._
@@ -44,7 +46,9 @@ object DetectorDStreamApp {
         .saveToCassandra("botdetect", "click_stream", SomeColumns("type", "ip", "is_bot", "time", "category_id"))
     }
 
-    clickEvents.window(Seconds(10), Seconds(10))
+    clickEvents
+      .window(Seconds(10), Seconds(10))
+      .filter(event => event.time.getTime < System.currentTimeMillis() + 10 * 60 * 1000)
       .map(convert)
       .reduce(reduceAgg)
       .flatMap(m => m.values)
