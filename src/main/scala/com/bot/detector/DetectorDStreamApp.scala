@@ -49,12 +49,12 @@ object DetectorDStreamApp {
 
     clickEvents
       .window(Seconds(10), Seconds(10))
-      .filter(event => event.time.getTime < System.currentTimeMillis() + 10 * 60 * 1000)
+      .filter(event => event.time.getTime < System.currentTimeMillis() + 10 * 60 * 1000) // after 10 min
       .map(convert)
       .reduce(reduceAgg)
       .flatMap(m => m.values)
       .filter(a => a.eventsCount > limitOfEvents)
-      .foreachRDD{ rdd =>
+      .foreachRDD { rdd =>
         RedisUtil.writeBotsRdd(rdd.map(agg => BotData(agg.ip)))(spark)
       }
 
