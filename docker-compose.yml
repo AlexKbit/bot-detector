@@ -85,19 +85,19 @@ services:
       - zoo1
 
 # =============== Flume services ===============
-  flume:
-    image: probablyfine/flume:2.0.0
-    environment:
-      FLUME_AGENT_NAME: docker
-    volumes:
-      - type: bind
-        source: ./flume/data
-        target: /tmp/data
-      - ./container-data/flume/conf:/opt/flume-config/
-    depends_on:
-      - kafka1
-      - kafka2
-      - kafka3
+#  flume:
+#    image: probablyfine/flume:2.0.0
+#    environment:
+#      FLUME_AGENT_NAME: docker
+#    volumes:
+#      - type: bind
+#        source: ./flume/data
+#        target: /tmp/data
+#      - ./container-data/flume/conf:/opt/flume-config/
+#    depends_on:
+#      - kafka1
+#      - kafka2
+#      - kafka3
 # =============== Cassandra services ===============
   cassandra-seed:
     image: cassandra:3.0
