@@ -52,7 +52,7 @@ object DetectorSStreamApp {
       .writeStream
       .outputMode(OutputMode.Append)
       .option("checkpointLocation", "/tmp/check_point/")
-      .foreachBatch { (batchDF, id) =>
+      .foreachBatch { (batchDF, _) =>
         RedisUtil.writeBotsDS(batchDF.map(r => BotData(r.getAs("ip").toString)))(spark)
        }.start
 
